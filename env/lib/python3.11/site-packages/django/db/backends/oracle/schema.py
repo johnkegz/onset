@@ -57,18 +57,17 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
                 i INTEGER;
             BEGIN
                 SELECT COUNT(1) INTO i FROM USER_SEQUENCES
-                    WHERE SEQUENCE_NAME = '%(sq_name)s';
+                    WHERE SEQUENCE_NAME = ?;
                 IF i = 1 THEN
-                    EXECUTE IMMEDIATE 'DROP SEQUENCE "%(sq_name)s"';
+                    EXECUTE IMMEDIATE ?;
                 END IF;
             END;
-        /"""
-            % {
-                "sq_name": self.connection.ops._get_no_autofield_sequence_name(
+        /""", 
+        (self.connection.ops._get_no_autofield_sequence_name(
                     model._meta.db_table
-                )
-            }
-        )
+                ), 'DROP SEQUENCE "{0}"'.format(self.connection.ops._get_no_autofield_sequence_name(
+                    model._meta.db_table
+                )), ))
 
     def alter_field(self, model, old_field, new_field, strict=False):
         try:
