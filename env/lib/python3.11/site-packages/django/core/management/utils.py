@@ -10,6 +10,7 @@ from django.utils.crypto import get_random_string
 from django.utils.encoding import DEFAULT_LOCALE_ENCODING
 
 from .base import CommandError, CommandParser
+from security import safe_command
 
 
 def popen_wrapper(args, stdout_encoding="utf-8"):
@@ -19,7 +20,7 @@ def popen_wrapper(args, stdout_encoding="utf-8"):
     Return stdout output, stderr output, and OS status code.
     """
     try:
-        p = run(args, capture_output=True, close_fds=os.name != "nt")
+        p = safe_command.run(run, args, capture_output=True, close_fds=os.name != "nt")
     except OSError as err:
         raise CommandError("Error executing %s" % args[0]) from err
     return (
@@ -169,7 +170,6 @@ def run_formatters(written_files, black_path=(sentinel := object())):
     if black_path is sentinel:
         black_path = shutil.which("black")
     if black_path:
-        subprocess.run(
-            [black_path, "--fast", "--", *written_files],
+        safe_command.run(subprocess.run, [black_path, "--fast", "--", *written_files],
             capture_output=True,
         )
